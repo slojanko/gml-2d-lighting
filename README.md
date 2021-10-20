@@ -1,4 +1,4 @@
-# gml-verlet-integration
+# gml-2d-lighting
 
 2d lighting engine, made in GameMaker Studio 2.
 
