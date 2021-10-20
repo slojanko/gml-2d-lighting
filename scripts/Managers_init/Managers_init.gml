@@ -1,0 +1,1 @@
+pLightingManager = new LightingManager();
