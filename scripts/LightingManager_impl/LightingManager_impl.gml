@@ -7,8 +7,10 @@ enum LIGHTING_SURFACE {
 }
 
 enum LIGHT {
-	GLOBAL = 0,
-	
+	GLOBAL_STATIC = 0,
+	STATIC = 1,
+	DYNAMIC = 2,
+	LIGHT_ONLY = 3,
 }
 
 enum CASTER {
@@ -31,6 +33,10 @@ function LightingManager() constructor{
 	
 	surface_width = 640;
 	surface_height = 360;
+	
+	// CACHE
+	light_positions = array_create(8, 0);
+	light_colors = array_create(16, 0);
 	
 	static SetResolution = function(width_, height_) {
 		surface_width = width_;
@@ -105,13 +111,12 @@ function LightingManager() constructor{
 		surface_reset_target();
 		
 		var lights_count = ds_list_size(lights);
-		var light_positions = array_create(8, 0);
 		
 		var lights_start = 0;
 		var lights_end = 0;
 		
 		var light_shadows_mat = matrix_build(-camera_get_view_x(view_camera[0]) * (surface_width / view_wport[0]), -camera_get_view_y(view_camera[0]) * (surface_height / view_hport[0]), 0, 0, 0, 0, surface_width / view_wport[0], surface_height / view_hport[0], 1);
-					
+		
 		// Go through all lights in groups
 		while(lights_start < lights_count) {
 			lights_end = min(lights_count, lights_start + 4);
@@ -134,8 +139,15 @@ function LightingManager() constructor{
 				with(lights[| i]) {
 					draw_self();
 				}
+				
+				var color = lights[| i].image_blend;
+				
 				light_positions[channel * 2] = lights[| i].x; 
 				light_positions[channel * 2 + 1] = lights[| i].y;
+				light_colors[channel * 4] = color_get_red(color) / 255;
+				light_colors[channel * 4 + 1] = color_get_green(color) / 255;
+				light_colors[channel * 4 + 2] = color_get_blue(color) / 255;
+				light_colors[channel * 4 + 3] = lights[| i].image_alpha;
 			}
 			shader_reset();
 			
@@ -152,6 +164,7 @@ function LightingManager() constructor{
 			// Accumulare group lights and shadows to final surface
 			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.FINAL]);
 			shader_set(shadow_merge_shd);
+			shader_set_uniform_f_array(shader_get_uniform(shadow_merge_shd, "u_mColors"), light_colors);
 			gpu_set_blendmode_ext(bm_one, bm_one);
 			draw_surface(lighting_surfaces[LIGHTING_SURFACE.FOUR], 0, 0);
 			shader_reset();
