@@ -1,6 +1,3 @@
-if (!global.use_new) 
-	return;
-	
 profiler.Start();
 
 global.pLightingManager.Render();

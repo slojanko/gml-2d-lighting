@@ -1,6 +1,3 @@
-if (!global.use_new) 
-	return;
-
 draw_set_color(c_red);
 draw_text(0, 32, 0);
 draw_text(0, 48, 0);

@@ -1,3 +1,4 @@
+format = CASTER_FORMAT.OUTLINE;
 vertices = GetPathShadowVertices(shadow1_path);
 vertices_count = array_length(vertices);
 

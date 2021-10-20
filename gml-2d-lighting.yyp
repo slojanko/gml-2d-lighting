@@ -1,8 +1,6 @@
 {
   "resources": [
-    {"id":{"name":"shadow_controller_obj","path":"objects/shadow_controller_obj/shadow_controller_obj.yy",},"order":1,},
     {"id":{"name":"placeholder_spr","path":"sprites/placeholder_spr/placeholder_spr.yy",},"order":8,},
-    {"id":{"name":"aaa","path":"sprites/aaa/aaa.yy",},"order":7,},
     {"id":{"name":"Managers_init","path":"scripts/Managers_init/Managers_init.yy",},"order":5,},
     {"id":{"name":"Profiler_impl","path":"scripts/Profiler_impl/Profiler_impl.yy",},"order":1,},
     {"id":{"name":"circle_spr","path":"sprites/circle_spr/circle_spr.yy",},"order":1,},

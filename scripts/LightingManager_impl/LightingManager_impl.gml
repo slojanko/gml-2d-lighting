@@ -6,11 +6,18 @@ enum LIGHTING_SURFACE {
 	COUNT = 4,
 }
 
-enum LIGHT {
-	GLOBAL_STATIC = 0,
-	STATIC = 1,
-	DYNAMIC = 2,
-	LIGHT_ONLY = 3,
+// UNSUPORTED
+//enum LIGHT {
+//	GLOBAL_STATIC = 0,
+//	STATIC = 1,
+//	DYNAMIC = 2,
+//	LIGHT_ONLY = 3,
+//}
+
+// TODO: CONVERT EVERYTHING TO PAIRS, OUTLINE IS JUST A WRAPPER FOR SPECIAL PAIRS
+enum CASTER_FORMAT {
+	OUTLINE = 0,
+	PAIRS = 1,
 }
 
 enum CASTER {
@@ -111,7 +118,6 @@ function LightingManager() constructor{
 		surface_reset_target();
 		
 		var lights_count = ds_list_size(lights);
-		
 		var lights_start = 0;
 		var lights_end = 0;
 		
@@ -140,14 +146,15 @@ function LightingManager() constructor{
 					draw_self();
 				}
 				
-				var color = lights[| i].image_blend;
+				var light = lights[| i];
+				var color = light.image_blend;
 				
-				light_positions[channel * 2] = lights[| i].x; 
-				light_positions[channel * 2 + 1] = lights[| i].y;
+				light_positions[channel * 2] = light.x; 
+				light_positions[channel * 2 + 1] = light.y;
 				light_colors[channel * 4] = color_get_red(color) / 255;
 				light_colors[channel * 4 + 1] = color_get_green(color) / 255;
 				light_colors[channel * 4 + 2] = color_get_blue(color) / 255;
-				light_colors[channel * 4 + 3] = lights[| i].image_alpha;
+				light_colors[channel * 4 + 3] = light.image_alpha;
 			}
 			shader_reset();
 			
@@ -190,17 +197,34 @@ function LightingManager() constructor{
 			with(static_casters[| i]) {
 				
 				var buff = other.buffer;
-				for(var ch = 0; ch < 4; ch++) {
-					for(var j = 0; j < vertices_count; j++) {
-						var vert1 = vertices[j];
-						var vert2 = vertices[(j + 1) mod vertices_count];
-						vertex_float4(buff, vert1.x, vert1.y, ch, 0);
-						vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-						vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+				
+				if (format == CASTER_FORMAT.OUTLINE) {
+					for(var ch = 0; ch < 4; ch++) {
+						for(var j = 0; j < vertices_count; j++) {
+							var vert1 = vertices[j];
+							var vert2 = vertices[(j + 1) mod vertices_count];
+							vertex_float4(buff, vert1.x, vert1.y, ch, 0);
+							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
+							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
 		
-						vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-						vertex_float4(buff, vert2.x, vert2.y, ch, 1);
-						vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
+							vertex_float4(buff, vert2.x, vert2.y, ch, 1);
+							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+						}
+					}
+				} else {
+					for(var ch = 0; ch < 4; ch++) {
+						for(var j = 0; j < vertices_count / 2; j++) {
+							var vert1 = vertices[j * 2];
+							var vert2 = vertices[j * 2 + 1];
+							vertex_float4(buff, vert1.x, vert1.y, ch, 0);
+							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
+							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+		
+							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
+							vertex_float4(buff, vert2.x, vert2.y, ch, 1);
+							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+						}
 					}
 				}
 				
