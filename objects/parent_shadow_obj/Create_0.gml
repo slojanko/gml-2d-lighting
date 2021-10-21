@@ -1,1 +1,0 @@
-global.pLightingManager.RegisterCaster(id, CASTER.STATIC);

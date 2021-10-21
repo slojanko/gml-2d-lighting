@@ -1,8 +1,8 @@
 {
   "type": 3,
   "parent": {
-    "name": "WIP",
-    "path": "folders/Shaders/WIP.yy",
+    "name": "Shaders",
+    "path": "folders/Shaders.yy",
   },
   "resourceVersion": "1.0",
   "name": "shadow_blur_shd",

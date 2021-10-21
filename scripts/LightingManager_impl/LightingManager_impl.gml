@@ -1,9 +1,8 @@
 enum LIGHTING_SURFACE {
 	FINAL = 0,
-	SINGLE = 1,
-	FOUR = 2,
-	BLUR = 3,
-	COUNT = 4,
+	GROUP = 1,
+	BLUR = 2,
+	COUNT = 3,
 }
 
 // UNSUPORTED
@@ -25,6 +24,10 @@ enum CASTER {
 	DYNAMIC = 1,
 }
 
+vertex_format_begin();
+vertex_format_add_custom(vertex_type_float4, vertex_usage_position);
+global.shadow_vertex_format = vertex_format_end();
+
 function LightingManager() constructor{
 	lights = ds_list_create();
 	static_casters = ds_list_create();
@@ -43,6 +46,7 @@ function LightingManager() constructor{
 	
 	// CACHE
 	light_positions = array_create(8, 0);
+	light_screen_positions = array_create(8, 0);
 	light_colors = array_create(16, 0);
 	
 	static SetResolution = function(width_, height_) {
@@ -85,31 +89,8 @@ function LightingManager() constructor{
 	}
 	
 	static Render = function() {
-		// Check if new casters were added or removed
-		if (dirty_casters) {
-			RebuildBuffer();
-			dirty_casters = false;
-		}
-		
-		// Check if resolution changed
-		if (dirty_surfaces) {
-			for(var i = 0; i < LIGHTING_SURFACE.COUNT; i++) {
-				if (surface_exists(lighting_surfaces[i])) {
-					surface_free(lighting_surfaces[i]);
-				}
-			}
-			dirty_surfaces = false;
-		}
-		
-		// Check for surfaces
-		for(var i = 0; i < LIGHTING_SURFACE.COUNT; i++) {
-			surface_depth_disable(false);
-			
-			if (!surface_exists(lighting_surfaces[i])) {
-				lighting_surfaces[i] = surface_create(surface_width, surface_height);
-			}
-			surface_depth_disable(true);
-		}
+		CheckCasters();
+		CheckSurfaces();
 		
 		// Clean final surface to 0
 		surface_set_target(lighting_surfaces[LIGHTING_SURFACE.FINAL]);
@@ -128,7 +109,7 @@ function LightingManager() constructor{
 			lights_end = min(lights_count, lights_start + 4);
 			
 			// Clear group surface to 0
-			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.FOUR]);
+			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.GROUP]);
 			gpu_set_blendenable(false);
 			draw_clear_alpha(c_black, 0.0);
 			gpu_set_blendenable(true);
@@ -142,8 +123,8 @@ function LightingManager() constructor{
 			for(var i = lights_start; i < lights_end; i++) {
 				var channel = i - lights_start;
 				shader_set_uniform_f(uniform, channel);
-				with(lights[| i]) {
-					draw_self();
+				with(lights[| i]) { 
+					draw_self()
 				}
 				
 				var light = lights[| i];
@@ -151,6 +132,8 @@ function LightingManager() constructor{
 				
 				light_positions[channel * 2] = light.x; 
 				light_positions[channel * 2 + 1] = light.y;
+				light_screen_positions[channel * 2] = (light.x - camera_get_view_x(view_camera[0])) / view_wport[0]; 
+				light_screen_positions[channel * 2 + 1] = (light.y - camera_get_view_y(view_camera[0])) / view_hport[0];
 				light_colors[channel * 4] = color_get_red(color) / 255;
 				light_colors[channel * 4 + 1] = color_get_green(color) / 255;
 				light_colors[channel * 4 + 2] = color_get_blue(color) / 255;
@@ -165,15 +148,23 @@ function LightingManager() constructor{
 			vertex_submit(buffer, pr_trianglelist, -1);
 			shader_reset();
 			surface_reset_target();
-			
 			matrix_set(matrix_world, matrix_build_identity());
+			
+			// Blur channels
+			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.BLUR]);
+			shader_set(shadow_blur_shd);
+			shader_set_uniform_f_array(shader_get_uniform(shadow_blur_shd, "u_vLightPos"), light_screen_positions);
+			gpu_set_blendmode_ext(bm_one, bm_zero);
+			draw_surface(lighting_surfaces[LIGHTING_SURFACE.GROUP], 0, 0);
+			shader_reset();
+			surface_reset_target();			
 			
 			// Accumulare group lights and shadows to final surface
 			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.FINAL]);
 			shader_set(shadow_merge_shd);
 			shader_set_uniform_f_array(shader_get_uniform(shadow_merge_shd, "u_mColors"), light_colors);
 			gpu_set_blendmode_ext(bm_one, bm_one);
-			draw_surface(lighting_surfaces[LIGHTING_SURFACE.FOUR], 0, 0);
+			draw_surface(lighting_surfaces[LIGHTING_SURFACE.BLUR], 0, 0);
 			shader_reset();
 			surface_reset_target();
 			
@@ -187,6 +178,34 @@ function LightingManager() constructor{
 		gpu_set_blendmode_ext(bm_src_alpha, bm_inv_src_alpha);
 	}
 	
+	static CheckCasters = function() {
+		if (dirty_casters) {
+			RebuildBuffer();
+			dirty_casters = false;
+		}
+	}
+	
+	
+	static CheckSurfaces = function() {
+		if (dirty_surfaces) {
+			for(var i = 0; i < LIGHTING_SURFACE.COUNT; i++) {
+				if (surface_exists(lighting_surfaces[i])) {
+					surface_free(lighting_surfaces[i]);
+				}
+			}
+			dirty_surfaces = false;
+		}
+		
+		for(var i = 0; i < LIGHTING_SURFACE.COUNT; i++) {
+			surface_depth_disable(false);
+			
+			if (!surface_exists(lighting_surfaces[i])) {
+				lighting_surfaces[i] = surface_create(surface_width, surface_height);
+			}
+			surface_depth_disable(true);
+		}
+	}
+	
 	static RebuildBuffer = function() {
 		var static_casters_count = ds_list_size(static_casters);
 		
@@ -198,33 +217,17 @@ function LightingManager() constructor{
 				
 				var buff = other.buffer;
 				
-				if (format == CASTER_FORMAT.OUTLINE) {
-					for(var ch = 0; ch < 4; ch++) {
-						for(var j = 0; j < vertices_count; j++) {
-							var vert1 = vertices[j];
-							var vert2 = vertices[(j + 1) mod vertices_count];
-							vertex_float4(buff, vert1.x, vert1.y, ch, 0);
-							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+				for(var ch = 0; ch < 4; ch++) {
+					for(var j = 0; j < vertices_count; j+=2) {
+						var vert1 = vertices[j];
+						var vert2 = vertices[j + 1];
+						vertex_float4(buff, vert1.x, vert1.y, ch, 0);
+						vertex_float4(buff, vert2.x, vert2.y, ch, 0);
+						vertex_float4(buff, vert1.x, vert1.y, ch, 1);
 		
-							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-							vertex_float4(buff, vert2.x, vert2.y, ch, 1);
-							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
-						}
-					}
-				} else {
-					for(var ch = 0; ch < 4; ch++) {
-						for(var j = 0; j < vertices_count / 2; j++) {
-							var vert1 = vertices[j * 2];
-							var vert2 = vertices[j * 2 + 1];
-							vertex_float4(buff, vert1.x, vert1.y, ch, 0);
-							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
-		
-							vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-							vertex_float4(buff, vert2.x, vert2.y, ch, 1);
-							vertex_float4(buff, vert1.x, vert1.y, ch, 1);
-						}
+						vertex_float4(buff, vert2.x, vert2.y, ch, 0);
+						vertex_float4(buff, vert2.x, vert2.y, ch, 1);
+						vertex_float4(buff, vert1.x, vert1.y, ch, 1);
 					}
 				}
 				
