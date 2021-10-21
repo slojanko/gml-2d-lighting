@@ -37,6 +37,7 @@ function LightingManager() constructor{
 	
 	dirty_casters = false;
 	dirty_surfaces = false;
+	blur_enabled = true;
 	
 	buffer = -1;
 	buffer_vertices = 0;
@@ -54,6 +55,14 @@ function LightingManager() constructor{
 		surface_height = height_;
 		
 		dirty_surfaces = true;
+	}
+	
+	static SetBlur = function(enabled_) {
+		blur_enabled = enabled_;
+	}
+	
+	static ToggleBlur = function() {
+		blur_enabled = !blur_enabled;
 	}
 	
 	static RegisterLight = function(instance_) {
@@ -150,21 +159,24 @@ function LightingManager() constructor{
 			surface_reset_target();
 			matrix_set(matrix_world, matrix_build_identity());
 			
-			// Blur channels
-			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.BLUR]);
-			shader_set(shadow_blur_shd);
-			shader_set_uniform_f_array(shader_get_uniform(shadow_blur_shd, "u_vLightPos"), light_screen_positions);
-			gpu_set_blendmode_ext(bm_one, bm_zero);
-			draw_surface(lighting_surfaces[LIGHTING_SURFACE.GROUP], 0, 0);
-			shader_reset();
-			surface_reset_target();			
+			if (blur_enabled) {
+				// Blur channels
+				surface_set_target(lighting_surfaces[LIGHTING_SURFACE.BLUR]);
+				shader_set(shadow_blur_shd);
+				shader_set_uniform_f_array(shader_get_uniform(shadow_blur_shd, "u_vLightPos"), light_screen_positions);
+				gpu_set_blendmode_ext(bm_one, bm_zero);
+				draw_surface(lighting_surfaces[LIGHTING_SURFACE.GROUP], 0, 0);
+				shader_reset();
+				surface_reset_target();			
+			}
+			var merge_surface = blur_enabled ? LIGHTING_SURFACE.BLUR : LIGHTING_SURFACE.GROUP;
 			
 			// Accumulare group lights and shadows to final surface
 			surface_set_target(lighting_surfaces[LIGHTING_SURFACE.FINAL]);
 			shader_set(shadow_merge_shd);
 			shader_set_uniform_f_array(shader_get_uniform(shadow_merge_shd, "u_mColors"), light_colors);
 			gpu_set_blendmode_ext(bm_one, bm_one);
-			draw_surface(lighting_surfaces[LIGHTING_SURFACE.BLUR], 0, 0);
+			draw_surface(lighting_surfaces[merge_surface], 0, 0);
 			shader_reset();
 			surface_reset_target();
 			
