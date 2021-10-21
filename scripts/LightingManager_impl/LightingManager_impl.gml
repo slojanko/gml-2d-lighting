@@ -164,8 +164,9 @@ function LightingManager() constructor{
 				surface_set_target(lighting_surfaces[LIGHTING_SURFACE.BLUR]);
 				shader_set(shadow_blur_shd);
 				shader_set_uniform_f_array(shader_get_uniform(shadow_blur_shd, "u_vLightPos"), light_screen_positions);
-				gpu_set_blendmode_ext(bm_one, bm_zero);
+				gpu_set_blendenable(false);
 				draw_surface(lighting_surfaces[LIGHTING_SURFACE.GROUP], 0, 0);
+				gpu_set_blendenable(true);
 				shader_reset();
 				surface_reset_target();			
 			}
