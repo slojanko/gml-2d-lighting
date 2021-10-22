@@ -22,6 +22,7 @@ enum CASTER_FORMAT {
 enum CASTER {
 	STATIC = 0,
 	DYNAMIC = 1,
+	COUNT = 2,
 }
 
 vertex_format_begin();
@@ -39,8 +40,8 @@ function LightingManager() constructor{
 	dirty_surfaces = false;
 	blur_enabled = true;
 	
-	buffer = -1;
-	buffer_vertices = 0;
+	buffers = array_create(CASTER.COUNT, -1);
+	buffer_verticess = array_create(CASTER.COUNT, 0);
 	
 	surface_width = 640;
 	surface_height = 360;
@@ -221,6 +222,11 @@ function LightingManager() constructor{
 	
 	static RebuildBuffer = function() {
 		var static_casters_count = ds_list_size(static_casters);
+		
+		if (buffer != -1) {
+			vertex_delete_buffer(buffer);
+			buffer = -1;
+		}
 		
 		buffer = vertex_create_buffer();
 		vertex_begin(buffer, global.shadow_vertex_format);

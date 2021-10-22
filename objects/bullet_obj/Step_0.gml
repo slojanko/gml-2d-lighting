@@ -1,3 +1,3 @@
-if (collision_circle(x, y, 8, parent_shadow_obj, false, true)) {
+if (collision_circle(x, y, 8, rect_obj, false, true)) {
 	instance_destroy();
 }
