@@ -85,8 +85,9 @@ function LightingManager() constructor{
 		
 		// Clean final surface to 0
 		surface_set_target(lighting_surfaces[LIGHTING_SURFACE.FINAL]);
-		gpu_set_blendmode_ext(bm_one, bm_zero);
+		gpu_set_blendenable(false);
 		draw_clear_alpha(c_black, 0.0);
+		gpu_set_blendenable(true);
 		surface_reset_target();
 		
 		var lights_count = ds_list_size(lights);
