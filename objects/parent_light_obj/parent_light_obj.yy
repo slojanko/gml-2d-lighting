@@ -25,7 +25,7 @@
   "overriddenProperties": [],
   "parent": {
     "name": "Lights",
-    "path": "folders/Timelines/Objects/Lights.yy",
+    "path": "folders/Objects/Lights.yy",
   },
   "resourceVersion": "1.0",
   "name": "parent_light_obj",

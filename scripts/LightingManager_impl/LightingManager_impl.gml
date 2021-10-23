@@ -36,7 +36,7 @@ function LightingManager() constructor{
 	blur_enabled = true;
 	
 	buffers = array_create(CASTER.COUNT, -1);
-	buffer_verticess = array_create(CASTER.COUNT, 0);
+	buffer_vertices = array_create(CASTER.COUNT, 0);
 	
 	surface_width = 640;
 	surface_height = 360;
