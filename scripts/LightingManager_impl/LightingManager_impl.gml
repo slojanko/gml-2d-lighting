@@ -6,12 +6,12 @@ enum LIGHTING_SURFACE {
 }
 
 // UNUSED
-enum LIGHT {
-	GLOBAL_STATIC = 0,
-	STATIC = 1,
-	DYNAMIC = 2,
-	LIGHT_ONLY = 3,
-}
+//enum LIGHT {
+//	GLOBAL_STATIC = 0,
+//	STATIC = 1,
+//	DYNAMIC = 2,
+//	LIGHT_ONLY = 3,
+//}
 
 enum CASTER {
 	STATIC = 0,
@@ -136,7 +136,7 @@ function LightingManager() constructor{
 			// Draw group shadows to separate channels
 			shader_set(shadow_channel_shd);
 			shader_set_uniform_f_array(shader_get_uniform(shadow_channel_shd, "u_vLightPos"), light_positions);
-			gpu_set_blendmode_ext(bm_zero, bm_src_color);
+			gpu_set_blendmode_ext(bm_zero, bm_inv_src_color);
 			vertex_submit(buffers[CASTER.STATIC], pr_trianglelist, -1);
 			vertex_submit(buffers[CASTER.DYNAMIC], pr_trianglelist, -1);
 			shader_reset();
@@ -225,13 +225,13 @@ function LightingManager() constructor{
 					for(var j = 0; j < vertices_count; j+=2) {
 						var vert1 = vertices[j];
 						var vert2 = vertices[j + 1];
-						vertex_float4(buff, vert1.x, vert1.y, ch, 0);
-						vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-						vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+						vertex_float4(buff, vert1.x, vert1.y, ch, image_alpha);
+						vertex_float4(buff, vert2.x, vert2.y, ch, image_alpha);
+						vertex_float4(buff, vert1.x, vert1.y, ch + 0.5, image_alpha);
 		
-						vertex_float4(buff, vert2.x, vert2.y, ch, 0);
-						vertex_float4(buff, vert2.x, vert2.y, ch, 1);
-						vertex_float4(buff, vert1.x, vert1.y, ch, 1);
+						vertex_float4(buff, vert2.x, vert2.y, ch, image_alpha);
+						vertex_float4(buff, vert2.x, vert2.y, ch + 0.5, image_alpha);
+						vertex_float4(buff, vert1.x, vert1.y, ch + 0.5, image_alpha);
 					}
 				}
 				
