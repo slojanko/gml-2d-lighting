@@ -5,18 +5,12 @@ enum LIGHTING_SURFACE {
 	COUNT = 3,
 }
 
-// UNSUPORTED
-//enum LIGHT {
-//	GLOBAL_STATIC = 0,
-//	STATIC = 1,
-//	DYNAMIC = 2,
-//	LIGHT_ONLY = 3,
-//}
-
-// TODO: CONVERT EVERYTHING TO PAIRS, OUTLINE IS JUST A WRAPPER FOR SPECIAL PAIRS
-enum CASTER_FORMAT {
-	OUTLINE = 0,
-	PAIRS = 1,
+// UNUSED
+enum LIGHT {
+	GLOBAL_STATIC = 0,
+	STATIC = 1,
+	DYNAMIC = 2,
+	LIGHT_ONLY = 3,
 }
 
 enum CASTER {
@@ -31,8 +25,9 @@ global.shadow_vertex_format = vertex_format_end();
 
 function LightingManager() constructor{
 	lights = ds_list_create();
-	static_casters = ds_list_create();
-	dynamic_casters = ds_list_create();
+	casters = array_create(CASTER.COUNT, 0);
+	casters[CASTER.STATIC] = ds_list_create();
+	casters[CASTER.DYNAMIC] = ds_list_create();
 	
 	lighting_surfaces = array_create(LIGHTING_SURFACE.COUNT, -1);
 	
@@ -75,26 +70,12 @@ function LightingManager() constructor{
 	}
 	
 	static RegisterCaster = function(instance_, type_) {
-		switch(type_) {
-			case CASTER.STATIC: {
-				ds_list_add(static_casters, instance_);
-			}
-			case CASTER.DYNAMIC: {
-				ds_list_add(dynamic_casters, instance_);
-			}
-		}
+		ds_list_add(casters[type_], instance_);
 		dirty_casters = true;
 	}
 	
 	static UnregisterCaster = function(instance_, type_) {
-		switch(type) {
-			case CASTER.STATIC: {
-				ds_list_delete(static_casters, ds_list_find_index(static_casters, instance_));
-			}
-			case CASTER.DYNAMIC: {
-				ds_list_delete(dynamic_casters, ds_list_find_index(dynamic_casters, instance_));
-			}
-		}
+		ds_list_delete(casters[type_], ds_list_find_index(casters[type_], instance_));
 		dirty_casters = true;
 	}
 	
@@ -155,7 +136,8 @@ function LightingManager() constructor{
 			shader_set(shadow_channel_shd);
 			shader_set_uniform_f_array(shader_get_uniform(shadow_channel_shd, "u_vLightPos"), light_positions);
 			gpu_set_blendmode_ext(bm_zero, bm_src_color);
-			vertex_submit(buffer, pr_trianglelist, -1);
+			vertex_submit(buffers[CASTER.STATIC], pr_trianglelist, -1);
+			vertex_submit(buffers[CASTER.DYNAMIC], pr_trianglelist, -1);
 			shader_reset();
 			surface_reset_target();
 			matrix_set(matrix_world, matrix_build_identity());
@@ -194,9 +176,11 @@ function LightingManager() constructor{
 	
 	static CheckCasters = function() {
 		if (dirty_casters) {
-			RebuildBuffer();
+			RebuildBuffer(CASTER.STATIC);
 			dirty_casters = false;
 		}
+		
+		RebuildBuffer(CASTER.DYNAMIC);
 	}
 	
 	
@@ -204,7 +188,7 @@ function LightingManager() constructor{
 		if (dirty_surfaces) {
 			for(var i = 0; i < LIGHTING_SURFACE.COUNT; i++) {
 				if (surface_exists(lighting_surfaces[i])) {
-					surface_free(lighting_surfaces[i]);
+					surface_resize(lighting_surfaces[i], surface_width, surface_height);
 				}
 			}
 			dirty_surfaces = false;
@@ -220,21 +204,21 @@ function LightingManager() constructor{
 		}
 	}
 	
-	static RebuildBuffer = function() {
-		var static_casters_count = ds_list_size(static_casters);
+	static RebuildBuffer = function(caster) {
+		var casters_count = ds_list_size(casters[caster]);
 		
-		if (buffer != -1) {
-			vertex_delete_buffer(buffer);
-			buffer = -1;
+		if (buffers[caster] != -1) {
+			vertex_delete_buffer(buffers[caster]);
+			buffers[caster] = -1;
 		}
 		
-		buffer = vertex_create_buffer();
-		vertex_begin(buffer, global.shadow_vertex_format);
+		buffers[caster] = vertex_create_buffer();
+		vertex_begin(buffers[caster], global.shadow_vertex_format);
 		
-		for(var i = 0; i < static_casters_count; i++) {
-			with(static_casters[| i]) {
+		for(var i = 0; i < casters_count; i++) {
+			with(casters[caster][| i]) {
 				
-				var buff = other.buffer;
+				var buff = other.buffers[caster];
 				
 				for(var ch = 0; ch < 4; ch++) {
 					for(var j = 0; j < vertices_count; j+=2) {
@@ -253,8 +237,8 @@ function LightingManager() constructor{
 			}
 		}
 		
-		vertex_end(buffer);
-		vertex_freeze(buffer);
-		buffer_vertices = vertex_get_number(buffer);
+		vertex_end(buffers[caster]);
+		vertex_freeze(buffers[caster]);
+		buffer_vertices[caster] = vertex_get_number(buffers[caster]);
 	}
 }

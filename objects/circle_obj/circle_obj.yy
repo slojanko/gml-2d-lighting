@@ -28,7 +28,7 @@
   "overriddenProperties": [],
   "parent": {
     "name": "Shadows",
-    "path": "folders/Objects/Shadows.yy",
+    "path": "folders/Timelines/Objects/Shadows.yy",
   },
   "resourceVersion": "1.0",
   "name": "circle_obj",

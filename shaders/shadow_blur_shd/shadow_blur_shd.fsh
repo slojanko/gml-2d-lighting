@@ -12,7 +12,7 @@ float4 main(PixelShaderInput INPUT) : SV_TARGET
 {
 	float directions = 8.0;
     float quality = 3.0;
-    float size = 0.1;
+    float size = 0.07;
 	
 	float4 color = gm_BaseTextureObject.Sample(gm_BaseTexture, INPUT.uv);
 	

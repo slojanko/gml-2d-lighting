@@ -28,7 +28,7 @@
   "overriddenProperties": [],
   "parent": {
     "name": "Lights",
-    "path": "folders/Objects/Lights.yy",
+    "path": "folders/Timelines/Objects/Lights.yy",
   },
   "resourceVersion": "1.0",
   "name": "circle_light_obj",
