@@ -95,7 +95,13 @@ function LightingManager() constructor{
 		var lights_start = 0;
 		var lights_end = 0;
 		
-		var light_shadows_mat = matrix_build(-camera_get_view_x(view_camera[0]) * (surface_width / view_wport[0]), -camera_get_view_y(view_camera[0]) * (surface_height / view_hport[0]), 0, 0, 0, 0, surface_width / view_wport[0], surface_height / view_hport[0], 1);
+		var light_shadows_mat = matrix_build(
+		-camera_get_view_x(view_camera[0]) * surface_width / camera_get_view_width(view_camera[0]), 
+		-camera_get_view_y(view_camera[0]) * surface_height / camera_get_view_height(view_camera[0]), 
+		0, 0, 0, 0, 
+		surface_width / camera_get_view_width(view_camera[0]), 
+		surface_height / camera_get_view_height(view_camera[0]), 
+		1);
 		
 		// Go through all lights in groups
 		while(lights_start < lights_count) {
@@ -125,8 +131,8 @@ function LightingManager() constructor{
 				
 				light_positions[channel * 2] = light.x; 
 				light_positions[channel * 2 + 1] = light.y;
-				light_screen_positions[channel * 2] = (light.x - camera_get_view_x(view_camera[0])) / view_wport[0]; 
-				light_screen_positions[channel * 2 + 1] = (light.y - camera_get_view_y(view_camera[0])) / view_hport[0];
+				light_screen_positions[channel * 2] = (light.x - camera_get_view_x(view_camera[0])) / camera_get_view_width(view_camera[0]); 
+				light_screen_positions[channel * 2 + 1] = (light.y - camera_get_view_y(view_camera[0])) / camera_get_view_height(view_camera[0]);
 				light_colors[channel * 4] = color_get_red(color) / 255;
 				light_colors[channel * 4 + 1] = color_get_green(color) / 255;
 				light_colors[channel * 4 + 2] = color_get_blue(color) / 255;
@@ -171,7 +177,7 @@ function LightingManager() constructor{
 		
 		// Blend final surface with world
 		gpu_set_blendmode_ext(bm_dest_color, bm_src_color);
-		draw_surface_stretched(lighting_surfaces[LIGHTING_SURFACE.FINAL], camera_get_view_x(view_camera[0]), camera_get_view_y(view_camera[0]), view_wport[0], view_hport[0]);
+		draw_surface_stretched(lighting_surfaces[LIGHTING_SURFACE.FINAL], camera_get_view_x(view_camera[0]), camera_get_view_y(view_camera[0]), camera_get_view_width(view_camera[0]), camera_get_view_height(view_camera[0]));
 
 		gpu_set_blendmode_ext(bm_src_alpha, bm_inv_src_alpha);
 	}
