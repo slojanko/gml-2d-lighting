@@ -34,11 +34,12 @@ function GetCircleShadowVertices(precision){
 	return array;
 }
 
-// TODO: CONVERT TO PAIRS
 //function GetPathShadowVertices(path){
 //	var point_count = path_get_number(path);
 //	var array = array_create(point_count, 0);
 //	var matrix = matrix_build(x, y, 0, 0, 0, image_angle, image_xscale, image_yscale, 1);
+	
+//	var closed = path_get_closed(path);
 	
 //	var transformed;
 //	for(var i = 0; i < point_count; i++) {

@@ -19,9 +19,10 @@ enum CASTER {
 	COUNT = 2,
 }
 
+// Format for shadow groups
 vertex_format_begin();
 vertex_format_add_custom(vertex_type_float4, vertex_usage_position);
-global.shadow_vertex_format = vertex_format_end();
+global.group_vertex_format = vertex_format_end();
 
 function LightingManager() constructor{
 	lights = ds_list_create();
@@ -214,7 +215,7 @@ function LightingManager() constructor{
 		}
 		
 		buffers[caster] = vertex_create_buffer();
-		vertex_begin(buffers[caster], global.shadow_vertex_format);
+		vertex_begin(buffers[caster], global.group_vertex_format);
 		
 		for(var i = 0; i < casters_count; i++) {
 			with(casters[caster][| i]) {
