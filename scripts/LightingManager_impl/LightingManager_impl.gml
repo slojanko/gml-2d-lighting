@@ -39,8 +39,8 @@ function LightingManager() constructor{
 	buffers = array_create(CASTER.COUNT, -1);
 	buffer_vertices = array_create(CASTER.COUNT, 0);
 	
-	surface_width = 640;
-	surface_height = 360;
+	surface_width = 320;
+	surface_height = 180;
 	
 	// CACHE
 	light_positions = array_create(8, 0);
@@ -65,6 +65,10 @@ function LightingManager() constructor{
 	static RegisterLight = function(instance_) {
 		ds_list_add(lights, instance_);
 	}	
+	
+	static GetLightsCount = function() {
+		return ds_list_size(lights);
+	}
 	
 	static UnregisterLight = function(instance_) {
 		ds_list_delete(lights, ds_list_find_index(lights, instance_));
@@ -91,7 +95,7 @@ function LightingManager() constructor{
 		gpu_set_blendenable(true);
 		surface_reset_target();
 		
-		var lights_count = ds_list_size(lights);
+		var lights_count = GetLightsCount();
 		var lights_start = 0;
 		var lights_end = 0;
 		

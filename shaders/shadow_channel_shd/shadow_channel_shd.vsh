@@ -15,7 +15,6 @@ VertexShaderOutput main(VertexShaderInput INPUT)
 {
 	float4 pos = float4(INPUT.pos.xy, 0.0, 1.0);
 	pos.xy += (INPUT.pos.xy - u_vLightPos[floor(INPUT.pos.z)]) * frac(INPUT.pos.z) * 512.0;
-	//pos.xy += normalize((INPUT.pos.xy - u_vLightPos[floor(INPUT.pos.z)]) * frac(INPUT.pos.z)) * 128.0;
 	
 	VertexShaderOutput OUTPUT;
     OUTPUT.pos = mul(gm_Matrices[MATRIX_WORLD_VIEW_PROJECTION], pos);
